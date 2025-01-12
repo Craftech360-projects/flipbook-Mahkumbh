@@ -39,8 +39,7 @@ function handleCommand(command) {
 }
 
 // Check if Serial Port should be used
-const useSerialPort = process.env.USE_SERIAL_PORT === 'true' || false;
-
+const useSerialPort = true;
 if (useSerialPort) {
   const { SerialPort } = require('serialport');
   const serialPort = new SerialPort({
