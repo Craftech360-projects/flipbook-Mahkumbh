@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Amazing Book Page Flip Effect Using Turn.js | jQuery Plugin</title>
+  <style type="text/css">
+    body {
+      overflow: hidden;
+      background-size: 100% 100%;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Background video containers */
+    .background-video-container {
+      position: fixed;
+      top: 0;
+      height: 100vh;
+      width: 50vw;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .background-video-left {
+      left: 0;
+    }
+
+    .background-video-right {
+      right: 0;
+    }
+
+    .background-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #album {
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      position: relative;
+      z-index: 1;
+    }
+
+    #album video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #album .shadow {
+      box-shadow: inset -20px 0 20px -20px rgba(0, 0, 0, 0.4);
+    }
+
+    #album .page-wrapper {
+      -webkit-perspective: 2000px;
+      perspective: 2000px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Background videos -->
+  <div class="background-video-container background-video-left">
+    <video class="background-video" src="A/1.mp4" muted loop autoplay></video>
+  </div>
+  <div class="background-video-container background-video-right">
+    <video class="background-video" src="A/1.mp4" muted loop autoplay></video>
+  </div>
+
+  <!-- Album container -->
+  <div id="album"></div>
+
+  <script src="jquery-3.5.1.min.js"></script>
+  <script src="turn.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Initialize Socket.IO
+    const socket = io();
+    const folder = 'A';
+
+    // Function to dynamically create video elements
+    function createVideos(videoFiles) {
+      const album = $('#album');
+      
+      // Add the videos
+      videoFiles.forEach(file => {
+        const videoDiv = $('<div></div>');
+        const videoElement = $(`<video src="${folder}/${file}" muted loop autoplay></video>`);
+        videoDiv.append(videoElement);
+        album.append(videoDiv);
+      });
+
+      // Initialize turn.js after videos are loaded
+      album.turn({
+        gradients: true,
+        acceleration: true,
+        duration: 3000,
+        autoCenter: true,
+        elevation: 50,
+        display: 'double',
+        shadows: true,
+        when: {
+          turning: function(e, page, view) {
+            // Pause all videos
+            $('#album video').each(function() {
+              this.pause();
+              this.currentTime = 0;
+            });
+          },
+          turned: function(e, page, view) {
+            // Play videos on visible pages
+            view.forEach(pageNum => {
+              if (pageNum) {  // Check if pageNum exists (not 0)
+                const video = $(`#album .p${pageNum} video`)[0];
+                if (video) {
+                  video.currentTime = 0;
+                  video.play().catch(err => console.log('Video play error:', err));
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+
+    // Fetch the list of video files from the JSON file
+    $.getJSON(`${folder}/videos.json`, function(videoFiles) {
+      createVideos(videoFiles);
+    });
+
+    // Handle keyboard controls
+    $(document).keydown(function(e) {
+      switch (e.keyCode) {
+        case 37: // Left arrow key
+          $("#album").turn("previous");
+          break;
+        case 39: // Right arrow key
+          $("#album").turn("next");
+          break;
+      }
+    });
+
+    // Handle Socket.IO events
+    socket.on('flip', function(direction) {
+      if (direction === 'next') {
+        $("#album").turn("next");
+      } else if (direction === 'previous') {
+        $("#album").turn("previous");
+      }
+    });
+  </script>
+</body>
+</html>
