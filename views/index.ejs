@@ -82,7 +82,8 @@
     // Initialize Socket.IO
     const socket = io();
     const folder = 'A';
-
+    let idleTimeout;
+  
     // Function to dynamically create video elements
     function createVideos(videoFiles) {
       const album = $('#album');
@@ -94,7 +95,7 @@
         videoDiv.append(videoElement);
         album.append(videoDiv);
       });
-
+  
       // Initialize turn.js after videos are loaded
       album.turn({
         gradients: true,
@@ -111,6 +112,7 @@
               this.pause();
               this.currentTime = 0;
             });
+            resetIdleTimer();
           },
           turned: function(e, page, view) {
             // Play videos on visible pages
@@ -126,13 +128,14 @@
           }
         }
       });
+      resetIdleTimer();
     }
-
+  
     // Fetch the list of video files from the JSON file
     $.getJSON(`${folder}/videos.json`, function(videoFiles) {
       createVideos(videoFiles);
     });
-
+  
     // Handle keyboard controls
     $(document).keydown(function(e) {
       switch (e.keyCode) {
@@ -143,8 +146,9 @@
           $("#album").turn("next");
           break;
       }
+      resetIdleTimer();
     });
-
+  
     // Handle Socket.IO events
     socket.on('flip', function(direction) {
       if (direction === 'next') {
@@ -152,7 +156,17 @@
       } else if (direction === 'previous') {
         $("#album").turn("previous");
       }
+      resetIdleTimer();
     });
+  
+    // Function to reset the idle timer
+    function resetIdleTimer() {
+      clearTimeout(idleTimeout);
+      idleTimeout = setTimeout(() => {
+        $("#album").turn("page", 1); // Revert to the first page
+      }, 30000); // 30 seconds
+    }
   </script>
+  
 </body>
 </html>
