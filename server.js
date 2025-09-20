@@ -43,7 +43,7 @@ const useSerialPort = true;
 if (useSerialPort) {
   const { SerialPort } = require('serialport');
   const serialPort = new SerialPort({
-    path: '/dev/tty.usbserial-0001',
+    path: 'COM3',
     baudRate: 115200
   });
 
@@ -53,8 +53,10 @@ if (useSerialPort) {
 
   serialPort.on('data', (data) => {
     const command = data.toString().trim();
-    console.log('Received command from Serial Port:', command);
-    handleCommand(command);
+    if (command) {
+      console.log('Received command from Serial Port:', command);
+      handleCommand(command);
+    }
   });
 
   serialPort.on('error', (err) => {
