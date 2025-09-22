@@ -43,7 +43,7 @@ const useSerialPort = true;
 if (useSerialPort) {
   const { SerialPort } = require('serialport');
   const serialPort = new SerialPort({
-    path: 'COM3',
+    path: 'COM6',
     baudRate: 115200
   });
 
